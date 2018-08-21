@@ -1,4 +1,7 @@
-# acme-tiny
+# acme-tiny (AWS DNS version)
+
+A fork of acme-tiny using dns verification and the AWS Route 53
+service instead of http verification.
 
 [![Build Status](https://travis-ci.org/diafygi/acme-tiny.svg)](https://travis-ci.org/diafygi/acme-tiny)
 [![Coverage Status](https://coveralls.io/repos/diafygi/acme-tiny/badge.svg?branch=master&service=github)](https://coveralls.io/github/diafygi/acme-tiny?branch=master)
@@ -79,34 +82,9 @@ openssl req -new -sha256 -key domain.key -subj "/CN=yoursite.com" > domain.csr
 openssl req -new -sha256 -key domain.key -subj "/" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:yoursite.com,DNS:www.yoursite.com")) > domain.csr
 ```
 
-### Step 3: Make your website host challenge files
+### Step 3: Create an AWS access key with permission to write dns changes
 
-You must prove you own the domains you want a certificate for, so Let's Encrypt
-requires you host some files on them. This script will generate and write those
-files in the folder you specify, so all you need to do is make sure that this
-folder is served under the ".well-known/acme-challenge/" url path. NOTE: Let's
-Encrypt will perform a plain HTTP request to port 80 on your server, so you
-must serve the challenge files via HTTP (a redirect to HTTPS is fine too).
-
-```
-# Make some challenge folder (modify to suit your needs)
-mkdir -p /var/www/challenges/
-```
-
-```nginx
-# Example for nginx
-server {
-    listen 80;
-    server_name yoursite.com www.yoursite.com;
-
-    location /.well-known/acme-challenge/ {
-        alias /var/www/challenges/;
-        try_files $uri =404;
-    }
-
-    ...the rest of your config
-}
-```
+Also find the appropriate Hosted Zone ID from the route 53 console.
 
 ### Step 4: Get a signed certificate!
 
@@ -116,7 +94,7 @@ and read your private account key and CSR.
 
 ```
 # Run the script on your server
-python acme_tiny.py --account-key ./account.key --csr ./domain.csr --acme-dir /var/www/challenges/ > ./signed_chain.crt
+python acme_tiny.py --account-key ./account.key --csr ./domain.csr --aws-hosted-zone XXX --aws-access-key-id YYY --aws-secret-access-key zzz > ./signed_chain.crt
 ```
 
 ### Step 5: Install the certificate
